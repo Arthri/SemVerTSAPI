@@ -1,2 +1,11 @@
-- Changed default log file path to `serverlogs/{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.txt`
-- Targets .NET Framework 4.8 instead of .NET Framework 4.5
+- (5.1.3) Added modification notice to README
+- (5.1.3.3) Added `global.json` to control .NET version
+- (5.1.3) Changed default log file path to `serverlogs/{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.txt`
+- (5.1.3) Changed from `OTAPI` package to `MODEFDP.OTAPI` package
+- Changes declaration
+  - (5.1.3) Added `Source: https://github.com/Arthri/TSAPI` to logs
+  - (5.1.3) Description is prefixed with `MODIFIED VERSION -`
+  - (5.1.3) Changed package ID from `TSAPI` to `MODEFDP.TSAPI`
+- (5.1.3.3) Packed PDB in TSAPI package(nupkg)
+- (5.1.3.3) Removed explicit .NET version from NuGet Release CI
+- (5.1.3.3) Removed explicit .NET version from OTAPIv3 CI
