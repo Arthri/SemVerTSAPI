@@ -15,11 +15,11 @@ namespace TerrariaApi.Server.Hooking
 		{
 			_hookManager = hookManager;
 
-			On.Terraria.IO.WorldFile.SaveWorld_bool_bool += WorldFile_SaveWorld;
-			On.Terraria.WorldGen.StartHardmode += WorldGen_StartHardmode;
-			On.Terraria.WorldGen.SpreadGrass += WorldGen_SpreadGrass;
-			On.Terraria.Main.checkXMas += Main_checkXMas;
-			On.Terraria.Main.checkHalloween += Main_checkHalloween;
+			Hooks.IO.WorldFile.PreSaveWorld += WorldFile_OnPreSaveWorld;
+			Hooks.WorldGen.PreStartHardmode += WorldGen_PreStartHardmode;
+			Hooks.WorldGen.PreSpreadGrass += WorldGen_PreSpreadGrass;
+			Hooks.Main.PreCheckChristmas += Main_OnPreCheckXMas;
+			Hooks.Main.PreCheckHalloween += Main_OnPreCheckHalloween;
 
 			Hooks.Collision.PressurePlate += OnPressurePlate;
 			Hooks.WorldGen.Meteor += OnDropMeteor;
@@ -44,20 +44,20 @@ namespace TerrariaApi.Server.Hooking
 			}
 		}
 
-		static void WorldFile_SaveWorld(On.Terraria.IO.WorldFile.orig_SaveWorld_bool_bool orig, bool useCloudSaving, bool resetTime)
+		static HookResult WorldFile_OnPreSaveWorld(Hooks.IO.WorldFile.SaveWorldEventArgs args)
 		{
-			if (_hookManager.InvokeWorldSave(resetTime))
-				return;
+			if (_hookManager.InvokeWorldSave(args.ResetTime))
+				return HookResult.Cancel;
 
-			orig(useCloudSaving, resetTime);
+			return HookResult.Continue;
 		}
 
-		private static void WorldGen_StartHardmode(On.Terraria.WorldGen.orig_StartHardmode orig)
+		private static HookResult WorldGen_PreStartHardmode(Hooks.WorldGen.StartHardmodeEventArgs args)
 		{
 			if (_hookManager.InvokeWorldStartHardMode())
-				return;
+				return HookResult.Cancel;
 
-			orig();
+			return HookResult.Continue;
 		}
 
 		static void OnDropMeteor(object sender, Hooks.WorldGen.MeteorEventArgs e)
@@ -68,28 +68,28 @@ namespace TerrariaApi.Server.Hooking
 			}
 		}
 
-		private static void Main_checkXMas(On.Terraria.Main.orig_checkXMas orig)
+		private static HookResult Main_OnPreCheckXMas(Hooks.Main.CheckChristmasEventArgs args)
 		{
 			if (_hookManager.InvokeWorldChristmasCheck(ref Terraria.Main.xMas))
-				return;
+				return HookResult.Cancel;
 
-			orig();
+			return HookResult.Cancel;
 		}
 
-		private static void Main_checkHalloween(On.Terraria.Main.orig_checkHalloween orig)
+		private static HookResult Main_OnPreCheckHalloween(Hooks.Main.CheckHalloweenEventArgs args)
 		{
 			if (_hookManager.InvokeWorldHalloweenCheck(ref Main.halloween))
-				return;
+				return HookResult.Cancel;
 
-			orig();
+			return HookResult.Cancel;
 		}
 
-		private static void WorldGen_SpreadGrass(On.Terraria.WorldGen.orig_SpreadGrass orig, int i, int j, int dirt, int grass, bool repeat, TileColorCache color)
+		private static HookResult WorldGen_PreSpreadGrass(Hooks.WorldGen.SpreadGrassEventArgs args)
 		{
-			if (_hookManager.InvokeWorldGrassSpread(i, j, dirt, grass, repeat, color))
-				return;
+			if (_hookManager.InvokeWorldGrassSpread(args.X, args.Y, args.Dirt, args.Grass, args.Repeat, args.Color))
+				return HookResult.Cancel;
 
-			orig(i, j, dirt, grass, repeat, color);
+			return HookResult.Continue;
 		}
 	}
 }

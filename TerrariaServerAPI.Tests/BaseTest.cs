@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using OTAPI;
 using System;
 using System.Threading;
 
@@ -15,19 +16,20 @@ public class BaseTest
 		{
 			var are = new AutoResetEvent(false);
 			Exception? error = null;
-			On.Terraria.Main.hook_DedServ cb = (On.Terraria.Main.orig_DedServ orig, Terraria.Main instance) =>
+			PreHookHandler<Hooks.Main.DedicatedServerEventArgs> cb = (Hooks.Main.DedicatedServerEventArgs args) =>
 			{
-				instance.Initialize();
+				args.Instance.Initialize();
 				are.Set();
 				_initialized = true;
+				return HookResult.Cancel;
 			};
-			On.Terraria.Main.DedServ += cb;
+			Hooks.Main.PreDedicatedServer += cb;
 
 			global::TerrariaApi.Server.Program.Main(new string[] { });
 
 			_initialized = are.WaitOne(TimeSpan.FromSeconds(30));
 
-			On.Terraria.Main.DedServ -= cb;
+			Hooks.Main.PreDedicatedServer -= cb;
 
 			Assert.That(_initialized, Is.True);
 			Assert.That(error, Is.Null);

@@ -16,26 +16,32 @@ namespace TerrariaApi.Server.Hooking
 		{
 			_hookManager = hookManager;
 
-			On.Terraria.Item.SetDefaults_int_bool_ItemVariant += OnSetDefaults;
-			On.Terraria.Item.netDefaults += OnNetDefaults;
+			Hooks.Item.PreSetDefaults += OnPreSetDefaults;
+			Hooks.Item.PreNetDefaults += OnPreNetDefaults;
 
 			Hooks.Chest.QuickStack += OnQuickStack;
 		}
 
-		private static void OnNetDefaults(On.Terraria.Item.orig_netDefaults orig, Item item, int type)
+		private static HookResult OnPreNetDefaults(Hooks.Item.NetDefaultsEventArgs args)
 		{
-			if (_hookManager.InvokeItemNetDefaults(ref type, item))
-				return;
+			var type = args.Type;
+			var hookResult = _hookManager.InvokeItemNetDefaults(ref type, args.Item);
+			args.Type = type;
+			if (hookResult)
+				return HookResult.Cancel;
 
-			orig(item, type);
+			return HookResult.Continue;
 		}
 
-		private static void OnSetDefaults(On.Terraria.Item.orig_SetDefaults_int_bool_ItemVariant orig, Item item, int type, bool noMatCheck, ItemVariant? variant = null)
+		private static HookResult OnPreSetDefaults(Hooks.Item.SetDefaultsEventArgs args)
 		{
-			if (_hookManager.InvokeItemSetDefaultsInt(ref type, item, variant))
-				return;
+			var type = args.Type;
+			var hookResult = _hookManager.InvokeItemSetDefaultsInt(ref type, args.Item, args.Variant);
+			args.Type = type;
+			if (hookResult)
+				return HookResult.Cancel;
 
-			orig(item, type, noMatCheck, variant);
+			return HookResult.Continue;
 		}
 
 		private static void OnQuickStack(object sender, Hooks.Chest.QuickStackEventArgs e)
