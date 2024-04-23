@@ -15,9 +15,10 @@ namespace TerrariaApi.Server.Hooking
 		{
 			_hookManager = hookManager;
 
-			On.Terraria.Main.Update += OnUpdate;
-			On.Terraria.Main.Initialize += OnInitialize;
-			On.Terraria.Netplay.StartServer += OnStartServer;
+			Hooks.Main.PreUpdate += OnPreUpdate;
+			Hooks.Main.PostUpdate += OnPostUpdate;
+			Hooks.Main.PreInitialize += OnPreInitialize;
+			Hooks.Netplay.PreStartServer += OnPreStartServer;
 
 			Hooks.WorldGen.HardmodeTilePlace += OnHardmodeTilePlace;
 			Hooks.WorldGen.HardmodeTileUpdate += OnHardmodeTileUpdate;
@@ -25,10 +26,14 @@ namespace TerrariaApi.Server.Hooking
 			Hooks.NPC.MechSpawn += OnNpcMechSpawn;
 		}
 
-		private static void OnUpdate(On.Terraria.Main.orig_Update orig, Terraria.Main instance, GameTime gameTime)
+		private static HookResult OnPreUpdate(Hooks.Main.UpdateEventArgs args)
 		{
 			_hookManager.InvokeGameUpdate();
-			orig(instance, gameTime);
+			return HookResult.Continue;
+		}
+
+		private static void OnPostUpdate(Hooks.Main.UpdateEventArgs args)
+		{
 			_hookManager.InvokeGamePostUpdate();
 		}
 
@@ -48,17 +53,17 @@ namespace TerrariaApi.Server.Hooking
 			}
 		}
 
-		private static void OnInitialize(On.Terraria.Main.orig_Initialize orig, Terraria.Main instance)
+		private static HookResult OnPreInitialize(Hooks.Main.InitializeEventArgs args)
 		{
 			HookManager.InitialiseAPI();
 			_hookManager.InvokeGameInitialize();
-			orig(instance);
+			return HookResult.Continue;
 		}
 
-		private static void OnStartServer(On.Terraria.Netplay.orig_StartServer orig)
+		private static HookResult OnPreStartServer(Hooks.Netplay.StartServerEventArgs args)
 		{
 			_hookManager.InvokeGamePostInitialize();
-			orig();
+			return HookResult.Continue;
 		}
 
 		private static void OnItemMechSpawn(object sender, Hooks.Item.MechSpawnEventArgs e)

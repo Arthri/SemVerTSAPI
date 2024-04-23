@@ -17,20 +17,20 @@ namespace TerrariaApi.Server.Hooking
 		{
 			_hookManager = hookManager;
 
-			On.Terraria.Main.startDedInput += Main_startDedInput;
-			On.Terraria.RemoteClient.Reset += RemoteClient_Reset;
+			Hooks.Main.PreStartDedInput += OnPre_startDedInput;
+			Hooks.RemoteClient.PreReset += RemoteClient_OnPreReset;
 			Hooks.Main.CommandProcess += OnProcess;
 		}
 
-		static void Main_startDedInput(On.Terraria.Main.orig_startDedInput orig)
+		static HookResult OnPre_startDedInput(Hooks.Main.StartDedicatedInputEventArgs args)
 		{
 			if (Environment.GetCommandLineArgs().Any(x => x.Equals("-disable-commands")))
 			{
 				Console.WriteLine("Command thread has been disabled.");
-				return;
+				return HookResult.Cancel;
 			}
 
-			orig();
+			return HookResult.Continue;
 		}
 
 		static void OnProcess(object sender, Hooks.Main.CommandProcessEventArgs e)
@@ -41,18 +41,18 @@ namespace TerrariaApi.Server.Hooking
 			}
 		}
 
-		static void RemoteClient_Reset(On.Terraria.RemoteClient.orig_Reset orig, RemoteClient client)
+		static HookResult RemoteClient_OnPreReset(Hooks.RemoteClient.ResetEventArgs args)
 		{
 			if (!Netplay.Disconnect)
 			{
-				if (client.IsActive)
+				if (args.RemoteClient.IsActive)
 				{
-					_hookManager.InvokeServerLeave(client.Id);
+					_hookManager.InvokeServerLeave(args.RemoteClient.Id);
 				}
-				_hookManager.InvokeServerSocketReset(client);
+				_hookManager.InvokeServerSocketReset(args.RemoteClient);
 			}
 
-			orig(client);
+			return HookResult.Continue;
 		}
 	}
 }

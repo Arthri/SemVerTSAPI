@@ -11,3 +11,4 @@
 - (5.1.3.3) Packed PDB in TSAPI package(nupkg)
 - (5.1.3.3) Removed explicit .NET version from NuGet Release CI
 - (5.1.3.3) Removed explicit .NET version from OTAPIv3 CI
+- (5.2.0.2) Rewrote MonoMod RuntimeDetour hooks to OTAPI-provided hooks

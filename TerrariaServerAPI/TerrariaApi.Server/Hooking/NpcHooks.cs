@@ -16,11 +16,11 @@ namespace TerrariaApi.Server.Hooking
 		{
 			_hookManager = hookManager;
 
-			On.Terraria.NPC.SetDefaults += OnSetDefaultsById;
-			On.Terraria.NPC.SetDefaultsFromNetId += OnSetDefaultsFromNetId;
-			On.Terraria.NPC.StrikeNPC += OnStrike;
-			On.Terraria.NPC.Transform += OnTransform;
-			On.Terraria.NPC.AI += OnAI;
+			Hooks.NPC.PreSetDefaults += OnPreSetDefaultsById;
+			Hooks.NPC.PreSetDefaultsFromNetId += OnPreSetDefaultsFromNetId;
+			Hooks.NPC.PreStrikeNPC += OnPreStrike;
+			Hooks.NPC.PreTransform += OnPreTransform;
+			Hooks.NPC.PreAI += OnPreAI;
 
 			Hooks.NPC.Spawn += OnSpawn;
 			Hooks.NPC.DropLoot += OnDropLoot;
@@ -33,41 +33,60 @@ namespace TerrariaApi.Server.Hooking
 			_hookManager.InvokeNpcKilled(e.Npc);
 		}
 
-		static void OnSetDefaultsById(On.Terraria.NPC.orig_SetDefaults orig, NPC npc, int type, NPCSpawnParams spawnparams)
+		static HookResult OnPreSetDefaultsById(Hooks.NPC.SetDefaultsEventArgs args)
 		{
-			if (_hookManager.InvokeNpcSetDefaultsInt(ref type, npc))
-				return;
+			var type = args.Type;
+			var cancel = _hookManager.InvokeNpcSetDefaultsInt(ref type, args.NPC);
+			args.Type = type;
+			if (cancel)
+				return HookResult.Cancel;
 
-			orig(npc, type, spawnparams);
+			return HookResult.Continue;
 		}
 
-		static void OnSetDefaultsFromNetId(On.Terraria.NPC.orig_SetDefaultsFromNetId orig, NPC npc, int id, NPCSpawnParams spawnparams)
+		static HookResult OnPreSetDefaultsFromNetId(Hooks.NPC.SetDefaultsFromNetIdEventArgs args)
 		{
-			if (_hookManager.InvokeNpcNetDefaults(ref id, npc))
-				return;
+			var id = args.Type;
+			var cancel = _hookManager.InvokeNpcNetDefaults(ref id, args.NPC);
+			args.Type = id;
+			if (cancel)
+				return HookResult.Cancel;
 
-			orig(npc, id, spawnparams);
+			return HookResult.Continue;
 		}
 
-		static double OnStrike(On.Terraria.NPC.orig_StrikeNPC orig, NPC npc, int Damage, float knockBack, int hitDirection, bool crit, bool noEffect, bool fromNet, Entity entity)
+		static HookResult OnPreStrike(Hooks.NPC.StrikeNPCEventArgs args)
 		{
-			if (entity is Player player)
+			if (args.Attacker is Player player)
 			{
-				if (_hookManager.InvokeNpcStrike(npc, ref Damage, ref knockBack, ref hitDirection, ref crit, ref noEffect, ref fromNet, player))
+				var damage = args.Damage;
+				var knockback = args.Knockback;
+				var hitDirection = args.HitDirection;
+				var isCritical = args.IsCritical;
+				var hasNoEffect = args.HasNoEffect;
+				var fromNetwork = args.FromNetwork;
+				var cancel = _hookManager.InvokeNpcStrike(args.NPC, ref damage, ref knockback, ref hitDirection, ref isCritical, ref hasNoEffect, ref fromNetwork, player);
+				args.Damage = damage;
+				args.Knockback = knockback;
+				args.HitDirection = hitDirection;
+				args.IsCritical = isCritical;
+				args.HasNoEffect = hasNoEffect;
+				args.FromNetwork = fromNetwork;
+				if (cancel)
 				{
-					return 0;
+					return HookResult.Cancel;
 				}
 			}
 
-			return orig(npc, Damage, knockBack, hitDirection, crit, noEffect, fromNet, entity);
+			return HookResult.Continue;
 		}
 
-		static void OnTransform(On.Terraria.NPC.orig_Transform orig, NPC npc, int newType)
+		static HookResult OnPreTransform(Hooks.NPC.TransformEventArgs args)
 		{
-			if (_hookManager.InvokeNpcTransformation(npc.whoAmI))
-				return;
+			if (_hookManager.InvokeNpcTransformation(args.NPC.whoAmI))
+				return HookResult.Cancel;
 
-			orig(npc, newType);
+			return HookResult.Continue;
 		}
 
 		static void OnSpawn(object sender, Hooks.NPC.SpawnEventArgs e)
@@ -167,12 +186,12 @@ namespace TerrariaApi.Server.Hooking
 			e.ReverseLookup = reverseLookup;
 		}
 
-		static void OnAI(On.Terraria.NPC.orig_AI orig, NPC npc)
+		static HookResult OnPreAI(Hooks.NPC.AIEventArgs args)
 		{
-			if (_hookManager.InvokeNpcAIUpdate(npc))
-				return;
+			if (_hookManager.InvokeNpcAIUpdate(args.NPC))
+				return HookResult.Cancel;
 
-			orig(npc);
+			return HookResult.Continue;
 		}
 	}
 }

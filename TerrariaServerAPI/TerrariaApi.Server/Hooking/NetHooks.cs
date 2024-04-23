@@ -21,10 +21,10 @@ namespace TerrariaApi.Server.Hooking
 		{
 			_hookManager = hookManager;
 
-			On.Terraria.NetMessage.greetPlayer += OnGreetPlayer;
-			On.Terraria.Netplay.OnConnectionAccepted += OnConnectionAccepted;
-			On.Terraria.Chat.ChatHelper.BroadcastChatMessage += OnBroadcastChatMessage;
-			On.Terraria.Net.NetManager.SendData += OnSendNetData;
+			Hooks.NetMessage.PreGreetPlayer += OnPreGreetPlayer;
+			Hooks.Netplay.PreConnectionAccepted += OnPreConnectionAccepted;
+			Hooks.Chat.ChatHelper.PreBroadcastChatMessage += OnPreBroadcastChatMessage;
+			Hooks.Net.NetManager.PreSendData += OnPreSendNetData;
 
 			Hooks.NetMessage.SendData += OnSendData;
 			Hooks.NetMessage.SendBytes += OnSendBytes;
@@ -32,20 +32,23 @@ namespace TerrariaApi.Server.Hooking
 			Hooks.MessageBuffer.NameCollision += OnNameCollision;
 		}
 
-		static void OnBroadcastChatMessage(On.Terraria.Chat.ChatHelper.orig_BroadcastChatMessage orig, NetworkText text, Color color, int excludedPlayer)
+		static HookResult OnPreBroadcastChatMessage(Hooks.Chat.ChatHelper.BroadcastChatMessageEventArgs args)
 		{
+			var text = args.Text;
+			var color = args.Color;
 			float r = color.R, g = color.G, b = color.B;
 
 			var cancel = _hookManager.InvokeServerBroadcast(ref text, ref r, ref g, ref b);
 
-			if (!cancel)
-			{
-				color.R = (byte)r;
-				color.G = (byte)g;
-				color.B = (byte)b;
+			args.Text = text;
+			args.Color = new Color(r, g, b, color.A);
 
-				orig(text, color, excludedPlayer);
+			if (cancel)
+			{
+				return HookResult.Cancel;
 			}
+
+			return HookResult.Continue;
 		}
 
 		static void OnSendData(object sender, Hooks.NetMessage.SendDataEventArgs e)
@@ -95,17 +98,23 @@ namespace TerrariaApi.Server.Hooking
 			}
 		}
 
-		static void OnSendNetData(On.Terraria.Net.NetManager.orig_SendData orig, NetManager netmanager, Terraria.Net.Sockets.ISocket socket, NetPacket packet)
+		static HookResult OnPreSendNetData(Hooks.Net.NetManager.SendDataEventArgs args)
 		{
-			if (!_hookManager.InvokeNetSendNetData
-			(
-				ref netmanager,
-				ref socket,
-				ref packet
-			))
+			var netmanager = args.Instance;
+			var socket = args.Socket;
+			var packet = args.Packet;
+
+			var cancel = _hookManager.InvokeNetSendNetData(ref netmanager, ref socket, ref packet);
+
+			args.Socket = socket;
+			args.Packet = packet;
+
+			if (cancel)
 			{
-				orig(netmanager, socket, packet);
+				return HookResult.Cancel;
 			}
+
+			return HookResult.Continue;
 		}
 
 		static void OnReceiveData(object sender, Hooks.MessageBuffer.GetDataEventArgs e)
@@ -131,12 +140,12 @@ namespace TerrariaApi.Server.Hooking
 			}
 		}
 
-		static void OnGreetPlayer(On.Terraria.NetMessage.orig_greetPlayer orig, int plr)
+		static HookResult OnPreGreetPlayer(Hooks.NetMessage.GreetPlayerEventArgs args)
 		{
-			if (_hookManager.InvokeNetGreetPlayer(plr))
-				return;
+			if (_hookManager.InvokeNetGreetPlayer(args.Player))
+				return HookResult.Cancel;
 
-			orig(plr);
+			return HookResult.Continue;
 		}
 
 		static void OnSendBytes(object sender, Hooks.NetMessage.SendBytesEventArgs e)
@@ -155,18 +164,20 @@ namespace TerrariaApi.Server.Hooking
 			}
 		}
 
-		static void OnConnectionAccepted(On.Terraria.Netplay.orig_OnConnectionAccepted orig, Terraria.Net.Sockets.ISocket client)
+		static HookResult OnPreConnectionAccepted(Hooks.Netplay.ConnectionAcceptedEventArgs args)
 		{
 			int slot = FindNextOpenClientSlot();
 			if (slot != -1)
 			{
 				Netplay.Clients[slot].Reset();
-				Netplay.Clients[slot].Socket = client;
+				Netplay.Clients[slot].Socket = args.Socket;
 			}
 			if (FindNextOpenClientSlot() == -1)
 			{
 				Netplay.StopListening();
 			}
+
+			return HookResult.Cancel;
 		}
 
 		static int FindNextOpenClientSlot()

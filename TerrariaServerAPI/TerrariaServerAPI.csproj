@@ -8,7 +8,7 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<RunPostBuildEvent>Always</RunPostBuildEvent>
-		<Version>5.2.0.1</Version>
+		<Version>5.2.0.2</Version>
 		<AssemblyTitle>TSAPI</AssemblyTitle>
 		<Product>MODEFDP.TSAPI</Product>
 		<Company>Pryaxis &amp; TShock Contributors</Company>
@@ -24,6 +24,6 @@
 	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 		<PackageReference Include="System.Diagnostics.PerformanceCounter" Version="6.0.1" />
-		<PackageReference Include="MODEFDP.OTAPI.Upcoming" Version="3.1.20.1" />
+		<PackageReference Include="MODEFDP.OTAPI.Upcoming" Version="3.1.20.6" />
 	</ItemGroup>
 </Project>
